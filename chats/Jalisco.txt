@@ -1,0 +1,11 @@
+maestro: s
+default: Hola
+maestro: Hey\
+maestro: Hola
+maestro: w
+default: d
+maestro: s
+admin: 😄
+admin: s
+admin: 💯
+default123: hoLA

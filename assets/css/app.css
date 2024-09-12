@@ -1,0 +1,10 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* This file is for your main application CSS */
+/* Si es necesario, puedes agregar este estilo en el archivo CSS */
+.emoji-picker {
+    z-index: 50; /* Ajuste alto para que aparezca por encima de otros elementos */
+  }
+  

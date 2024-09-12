@@ -1,0 +1,13 @@
+
+<div class="chat-container max-w-lg mx-auto bg-gray-100 p-4 rounded shadow">
+  <div id="messages" class="messages h-64 overflow-y-scroll bg-white p-4 rounded mb-4 shadow-inner">
+    <%= for message <- @messages do %>
+      <p><strong class="text-blue-500"><%= message.user %></strong>: <%= message.message %></p>
+    <% end %>
+  </div>
+
+  <form phx-submit="send_message" class="flex">
+    <input type="text" name="message" placeholder="Escribe tu mensaje..." class="input flex-grow border border-gray-300 rounded-l px-4 py-2" />
+    <button type="submit" class="button bg-blue-500 text-white rounded-r px-4 py-2">Enviar</button>
+  </form>
+</div>
