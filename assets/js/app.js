@@ -67,17 +67,17 @@ document.addEventListener("DOMContentLoaded", () => {
           chatContainer.classList.remove("hidden");
           chatContainer.classList.add("block");
 
+          // Mostrar cuántos usuarios hay activos
+          activeUsersCountElement.textContent = resp.active_users || 1;
 
-          // Notificar al chat que un nuevo usuario se ha unido
+          // Notificar al chat que el usuario se ha unido (en gris)
           let joinMessage = document.createElement("p");
-          joinMessage.innerHTML = `<strong class="text-green-500">${username}</strong> se ha unido al chat.`;
+          joinMessage.textContent = `${username} se ha unido al chat.`;
+          joinMessage.classList.add("text-gray-500", "italic"); // Aplicar estilo gris e itálica
           messagesContainer.appendChild(joinMessage);
 
           // Scroll automático al final
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-          // Actualizar el número de usuarios activos
-          activeUsersCountElement.textContent = resp.active_users || 1;
         })
         .receive("error", resp => {
           console.error(`No se pudo conectar al chat del estado: ${state}`, resp);
@@ -94,27 +94,50 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       });
 
-      // Escuchar los mensajes entrantes
+      // Manejo de la recepción de mensajes
       channel.on("new_message", payload => {
-        console.log('Mensaje recibido:', payload);
-        let messageItem = document.createElement("p");
-        messageItem.innerHTML = `<strong class="text-blue-500">${payload.user}</strong>: ${payload.message}`;
-        messagesContainer.appendChild(messageItem);
+        console.log('Nuevo mensaje recibido:', payload.message);
+
+        // Crear el nuevo elemento del mensaje
+        let messageElement = document.createElement("p");
+        messageElement.textContent = `${payload.user}: ${payload.message}`;
+        messageElement.classList.add("text-black"); // Aplicar estilo de mensaje
+
+        // Añadir el nuevo mensaje al contenedor
+        messagesContainer.appendChild(messageElement);
 
         // Scroll automático al final
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
 
-      // Actualizar el número de usuarios activos cuando un nuevo usuario se une
+      // Escuchar los eventos "user_joined"
       channel.on("user_joined", payload => {
         console.log('Nuevo usuario se ha unido:', payload);
         activeUsersCountElement.textContent = payload.active_users;
+
+        // Mostrar el mensaje de que un nuevo usuario se ha unido
+        let newUserMessage = document.createElement("p");
+        newUserMessage.innerHTML = `${payload.user} se ha unido al chat.`;
+        newUserMessage.classList.add("text-gray-500", "italic");
+        messagesContainer.appendChild(newUserMessage);
+
+        // Scroll automático al final
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
 
       // Actualizar cuando un usuario deja el canal
       channel.on("user_left", payload => {
         console.log('Usuario ha salido:', payload);
         activeUsersCountElement.textContent = payload.active_users;
+
+        // Mostrar el mensaje de que un usuario ha salido
+        let userLeftMessage = document.createElement("p");
+        userLeftMessage.textContent = `${payload.user} ha dejado el chat.`;
+        userLeftMessage.classList.add("text-gray-500", "italic");
+        messagesContainer.appendChild(userLeftMessage);
+
+        // Scroll automático al final
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
     } else {
       alert("Por favor, ingresa un nombre de usuario y selecciona un estado.");
@@ -151,5 +174,4 @@ document.addEventListener("DOMContentLoaded", () => {
     emojiPicker.style.top = `${rect.bottom}px`;
     emojiPicker.style.left = `${rect.left}px`;
   });
-
 });

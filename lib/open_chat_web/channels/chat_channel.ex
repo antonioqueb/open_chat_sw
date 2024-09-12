@@ -1,3 +1,4 @@
+# lib\open_chat_web\channels\chat_channel.ex
 defmodule OpenChatWeb.ChatChannel do
   use OpenChatWeb, :channel
   alias OpenChat.ChatStorage
@@ -9,7 +10,10 @@ defmodule OpenChatWeb.ChatChannel do
     IO.inspect(params, label: "Parámetros recibidos")
     IO.inspect(socket, label: "Socket recibido")
 
+    # Obtener el nombre del usuario desde los parámetros o generar uno por defecto
     user = params["user"] || "User_#{:rand.uniform(1000)}"
+
+    # Asignar el usuario y el estado al socket
     socket = assign(socket, :user, user)
     socket = assign(socket, :state, state)
 
@@ -25,8 +29,8 @@ defmodule OpenChatWeb.ChatChannel do
     # Incrementar el número de usuarios activos en la sala
     active_users = increment_active_users(socket.assigns.state)
 
-    # Notificar a los usuarios que un nuevo usuario se ha unido y enviar el conteo actualizado
-    broadcast!(socket, "user_joined", %{active_users: active_users})
+    # Notificar a los usuarios que un nuevo usuario se ha unido y enviar el conteo actualizado, incluyendo el nombre del usuario
+    broadcast!(socket, "user_joined", %{active_users: active_users, user: socket.assigns.user})
 
     {:noreply, socket}
   end
@@ -36,8 +40,8 @@ defmodule OpenChatWeb.ChatChannel do
     state = socket.assigns.state
     active_users = decrement_active_users(state)
 
-    # Notificar que un usuario ha salido y actualizar el número de usuarios activos
-    broadcast!(socket, "user_left", %{active_users: active_users})
+    # Notificar que un usuario ha salido y actualizar el número de usuarios activos, incluyendo el nombre del usuario
+    broadcast!(socket, "user_left", %{active_users: active_users, user: socket.assigns.user})
     :ok
   end
 
