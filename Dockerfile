@@ -12,7 +12,7 @@ RUN mix local.hex --force && \
     mix local.rebar --force
 
 # Copia el archivo mix.exs y el mix.lock para instalar dependencias
-COPY mix.exs mix.lock ./ 
+COPY mix.exs ./ 
 
 # Instala las dependencias
 RUN mix deps.get
