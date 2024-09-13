@@ -7,7 +7,7 @@ defmodule OpenChatWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_open_chat_key",
-    signing_salt: "hsqqPkWz",
+    signing_salt: "9E2DAWk3i6r6QpOKtlilBhsMznVyCw403TTznbTfi6dxrdrHjUYQgve0VH/yEFyS",
     same_site: "Lax"
   ]
 
@@ -29,9 +29,8 @@ defmodule OpenChatWeb.Endpoint do
     gzip: false,
     only: OpenChatWeb.static_paths()
 
-  # Code reloading can be explicitly enabled under the
-  # :code_reloader configuration of your endpoint.
-  if code_reloading? do
+  # Solo habilitar el recargado de código en el entorno de desarrollo
+  if Application.get_env(:open_chat, :env) == :dev do
     socket "/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket
     plug Phoenix.LiveReloader
     plug Phoenix.CodeReloader
