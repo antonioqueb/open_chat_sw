@@ -1,0 +1,4 @@
+mix.lock
+.env
+_build
+mix.lock*
