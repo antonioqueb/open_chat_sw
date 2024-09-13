@@ -33,13 +33,14 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
+  # Cambiado a tu dominio específico
+  host = "chat-swinger.nonychat.online"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :open_chat, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :open_chat, OpenChatWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
+    url: [host: host, port: 443, scheme: "https"],  # Se ajustó el host y el esquema a https
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
@@ -49,7 +50,7 @@ if config_env() == :prod do
       port: port
     ],
     secret_key_base: secret_key_base,
-    check_origin: ["https://chat-swinger.nonychat.online"]
+    check_origin: ["https://chat-swinger.nonychat.online"]  # Se agregó check_origin
 
   # ## SSL Support
   #
