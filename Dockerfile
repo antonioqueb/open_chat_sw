@@ -2,7 +2,7 @@
 FROM elixir:1.14-alpine
 
 # Instala las dependencias del sistema
-RUN apk add --no-cache bash openssl
+RUN apk add --no-cache bash openssl git
 
 # Configura el entorno de trabajo
 WORKDIR /app
@@ -12,7 +12,7 @@ RUN mix local.hex --force && \
     mix local.rebar --force
 
 # Copia el archivo mix.exs y el mix.lock para instalar dependencias
-COPY mix.exs mix.lock ./
+COPY mix.exs mix.lock ./ 
 
 # Instala las dependencias
 RUN mix deps.get
