@@ -3,6 +3,15 @@ import { Socket } from "phoenix";
 // Verificar que el DOM se ha cargado antes de ejecutar el código
 document.addEventListener("DOMContentLoaded", () => {
 
+  // Función para generar un color aleatorio que contraste bien con un fondo blanco
+  function generateRandomColor() {
+    let color;
+    do {
+      color = Math.floor(Math.random()*16777215).toString(16); // Generar un color hexadecimal aleatorio
+    } while (parseInt(color, 16) > 0xCCCCCC); // Repetir si es muy claro
+    return `#${color}`;
+  }
+
   // Verificación de edad
   let ageVerification = document.getElementById("age-verification");
   let yesButton = document.getElementById("yes-button");
@@ -46,8 +55,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Obtener username y estado
     let username = document.querySelector("#username").value.trim();
     let state = document.querySelector("#state").value;
-    
-    console.log(`Intentando unirse al chat del estado: ${state} con el usuario: ${username}`);
+    let userColor = generateRandomColor(); // Generar un color aleatorio para el usuario
+
+    console.log(`Intentando unirse al chat del estado: ${state} con el usuario: ${username} y color: ${userColor}`);
 
     if (username !== "" && state !== "") {
       // Actualizar el título de la sala de chat
@@ -72,8 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
           // Notificar al chat que el usuario se ha unido (en gris)
           let joinMessage = document.createElement("p");
-          joinMessage.textContent = `${username} se ha unido al chat.`;
-          joinMessage.classList.add("text-gray-500", "italic"); // Aplicar estilo gris e itálica
+          joinMessage.classList.add("text-gray-500", "italic");
           messagesContainer.appendChild(joinMessage);
 
           // Scroll automático al final
@@ -89,7 +98,7 @@ document.addEventListener("DOMContentLoaded", () => {
         let message = chatInput.value.trim();
         if (message !== "") {
           console.log('Enviando mensaje:', message);
-          channel.push("new_message", { message: message });
+          channel.push("new_message", { message: message, color: userColor }); // Pasar el color del usuario al servidor
           chatInput.value = ""; // Limpiar el campo de entrada
         }
       });
@@ -100,10 +109,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Crear el nuevo elemento del mensaje
         let messageElement = document.createElement("p");
-        messageElement.textContent = `${payload.user}: ${payload.message}`;
-        messageElement.classList.add("text-black"); // Aplicar estilo de mensaje
 
-        // Añadir el nuevo mensaje al contenedor
+        // Aplicar el color aleatorio al nombre del usuario y semibold
+        let usernameSpan = document.createElement("span");
+        usernameSpan.textContent = `${payload.user}: `;
+        usernameSpan.style.color = payload.color; // Aplicar el color recibido
+        usernameSpan.style.fontWeight = "600"; // Aplicar semibold
+
+        // Agregar el mensaje del usuario
+        let messageText = document.createTextNode(payload.message);
+
+        // Añadir el nombre de usuario y el mensaje al contenedor
+        messageElement.appendChild(usernameSpan);
+        messageElement.appendChild(messageText);
+        messageElement.classList.add("text-black");
+
+        // Añadir el nuevo mensaje al contenedor de mensajes
         messagesContainer.appendChild(messageElement);
 
         // Scroll automático al final
