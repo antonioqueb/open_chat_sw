@@ -16,6 +16,8 @@ COPY mix.exs ./
 
 # Instala las dependencias
 RUN mix deps.get
+RUN apk add --no-cache inotify-tools
+
 
 # Copia el resto del código de la aplicación
 COPY . .
