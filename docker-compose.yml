@@ -6,7 +6,9 @@ services:
       - "4000:4000"
     volumes:
       - .:/app
+    env_file:
+      - .env
     environment:
       - MIX_ENV=prod
-    mem_limit: 1g  
-    cpus: "1.0" 
+    mem_limit: 1g
+    cpus: "1.0"
