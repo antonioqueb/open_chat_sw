@@ -1,10 +1,10 @@
 services:
   web:
     build: .
-    command: mix phx.server
+    command: mix phx.server --no-halt
     ports:
       - "4000:4000"
     volumes:
       - .:/app
     environment:
-      - MIX_ENV=dev
+      - MIX_ENV=prod
