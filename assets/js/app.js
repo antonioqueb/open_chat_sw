@@ -45,9 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let chatRoomTitle = document.getElementById("chat-room-title"); // Título de la sala de chat
   let activeUsersCountElement = document.getElementById("active-users-count"); // Elemento donde se mostrará la cantidad de usuarios activos
 
-  // Variable para almacenar los usuarios activos
-  let activeUsers = [];
-
   // Mostrar los elementos del DOM
   console.log('Elementos del DOM:', { joinForm, chatContainer, chatInput, chatForm, messagesContainer, emojiButton });
 
@@ -154,9 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
           // Mostrar cuántos usuarios hay activos
           activeUsersCountElement.textContent = resp.active_users || 1;
 
-          // Actualizar la lista de usuarios activos
-          activeUsers = resp.active_users_list || [];
-
           // Notificar al chat que el usuario se ha unido (en gris)
           let joinMessage = document.createElement("p");
           joinMessage.classList.add("text-gray-500", "italic");
@@ -168,28 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
         .receive("error", resp => {
           console.error(`No se pudo conectar al chat del estado: ${state}`, resp);
         });
-
-      // Variables para indicadores de escritura
-      let typing = false;
-      let timeout = undefined;
-
-      // Función para notificar que el usuario ha dejado de escribir
-      function typingTimeout() {
-        typing = false;
-        channel.push('stop_typing', {});
-      }
-
-      // Evento cuando el usuario presiona una tecla en el input
-      chatInput.addEventListener('input', () => {
-        if (!typing) {
-          typing = true;
-          channel.push('typing', {});
-          timeout = setTimeout(typingTimeout, 3000);
-        } else {
-          clearTimeout(timeout);
-          timeout = setTimeout(typingTimeout, 3000);
-        }
-      });
 
       // Manejo del envío de mensajes
       chatForm.addEventListener("submit", event => {
@@ -235,9 +207,6 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log('Nuevo usuario se ha unido:', payload);
         activeUsersCountElement.textContent = payload.active_users;
 
-        // Actualizar la lista de usuarios activos
-        activeUsers = payload.active_users_list;
-
         // Mostrar el mensaje de que un nuevo usuario se ha unido
         let newUserMessage = document.createElement("p");
         newUserMessage.innerHTML = `${payload.user} se ha unido al chat.`;
@@ -253,9 +222,6 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log('Usuario ha salido:', payload);
         activeUsersCountElement.textContent = payload.active_users;
 
-        // Actualizar la lista de usuarios activos
-        activeUsers = payload.active_users_list;
-
         // Mostrar el mensaje de que un usuario ha salido
         let userLeftMessage = document.createElement("p");
         userLeftMessage.textContent = `${payload.user} ha dejado el chat.`;
@@ -265,140 +231,39 @@ document.addEventListener("DOMContentLoaded", () => {
         // Scroll automático al final
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
       });
-
-      // Escuchar cuando otros usuarios están escribiendo
-      channel.on('user_typing', payload => {
-        let typingIndicator = document.getElementById('typing-indicator');
-        if (!typingIndicator) {
-          typingIndicator = document.createElement('p');
-          typingIndicator.id = 'typing-indicator';
-          typingIndicator.classList.add('text-gray-500', 'italic');
-          messagesContainer.appendChild(typingIndicator);
-        }
-        typingIndicator.textContent = `${payload.user} está escribiendo...`;
-        // Scroll automático al final
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      });
-
-      // Escuchar cuando otros usuarios dejan de escribir
-      channel.on('user_stop_typing', payload => {
-        let typingIndicator = document.getElementById('typing-indicator');
-        if (typingIndicator) {
-          typingIndicator.remove();
-        }
-      });
-
-      // Autocompletado de menciones (@username)
-      let mentionList = document.createElement('div');
-      mentionList.id = 'mention-list';
-      mentionList.classList.add('absolute', 'bg-white', 'border', 'border-gray-300', 'rounded-md', 'shadow-lg', 'max-h-40', 'overflow-y-auto', 'z-50');
-      mentionList.style.display = 'none';
-      chatInput.parentNode.appendChild(mentionList);
-
-      chatInput.addEventListener('input', () => {
-        let cursorPosition = chatInput.selectionStart;
-        let text = chatInput.value.substring(0, cursorPosition);
-        let mentionMatch = text.match(/@(\w*)$/);
-
-        if (mentionMatch) {
-          let query = mentionMatch[1].toLowerCase();
-          let filteredUsers = activeUsers.filter(user => user.toLowerCase().includes(query));
-
-          if (filteredUsers.length > 0) {
-            mentionList.innerHTML = '';
-            filteredUsers.forEach(user => {
-              let item = document.createElement('div');
-              item.classList.add('px-2', 'py-1', 'cursor-pointer', 'hover:bg-gray-200');
-              item.textContent = user;
-              item.addEventListener('click', () => {
-                chatInput.value = text.replace(/@(\w*)$/, `@${user} `) + chatInput.value.substring(cursorPosition);
-                mentionList.style.display = 'none';
-                chatInput.focus();
-              });
-              mentionList.appendChild(item);
-            });
-            // Posicionar el mentionList debajo del input
-            mentionList.style.display = 'block';
-            let rect = chatInput.getBoundingClientRect();
-            mentionList.style.top = `${rect.bottom + window.scrollY}px`;
-            mentionList.style.left = `${rect.left + window.scrollX}px`;
-            mentionList.style.width = `${rect.width}px`;
-          } else {
-            mentionList.style.display = 'none';
-          }
-        } else {
-          mentionList.style.display = 'none';
-        }
-      });
-
-      // Cerrar el mentionList al hacer clic fuera
-      document.addEventListener('click', (event) => {
-        if (!mentionList.contains(event.target) && event.target !== chatInput) {
-          mentionList.style.display = 'none';
-        }
-      });
-
     } else {
       alert("Por favor, ingresa un nombre de usuario y selecciona un estado.");
     }
   });
 
-  // Lista ampliada de emojis
-  const emojis = [
-    '😀', '😁', '😂', '🤣', '😃', '😄', '😅', '😆', '😉', '😊',
-    '😋', '😎', '😍', '😘', '🥰', '😗', '😙', '😚', '🙂', '🤗',
-    '🤩', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏', '😣', '😥',
-    '😮', '🤐', '😯', '😪', '😫', '🥱', '😴', '😌', '😛', '😜',
-    '😝', '🤤', '😒', '😓', '😔', '😕', '🙃', '🤑', '😲', '☹️',
-    '🙁', '😖', '😞', '😟', '😤', '😢', '😭', '😦', '😧', '🥺',
-    '😩', '😬', '😰', '😱', '😳', '🤯', '😡', '😠', '🤬', '😷',
-    '🤒', '🤕', '🤢', '🤮', '🤧', '🥵', '🥶', '😇', '🥳', '🥴',
-    '🤠', '🤡', '🤥', '🤫', '🤭', '🧐', '🤓'
-  ];
-
+  // Implementación básica de emojis usando Unicode nativo
   emojiButton.addEventListener('click', () => {
-    let emojiPicker = document.getElementById('emoji-picker');
-    if (emojiPicker) {
-      emojiPicker.remove();
-      return;
-    }
-    emojiPicker = document.createElement("div");
-    emojiPicker.id = 'emoji-picker';
+    const emojis = ['😊', '😂', '😍', '😎', '👍', '🔥', '💯', '🥳']; // Ejemplo de emojis
+    let emojiPicker = document.createElement("div");
     emojiPicker.style.position = "absolute";
     emojiPicker.style.background = "#fff";
     emojiPicker.style.border = "1px solid #ddd";
     emojiPicker.style.padding = "10px";
     emojiPicker.style.display = "grid";
-    emojiPicker.style.gridTemplateColumns = "repeat(8, 1fr)";
+    emojiPicker.style.gridTemplateColumns = "repeat(4, 1fr)";
     emojiPicker.style.gap = "5px";
-    emojiPicker.style.zIndex = "50";
     
     emojis.forEach(emoji => {
-      let emojiBtn = document.createElement("button");
-      emojiBtn.textContent = emoji;
-      emojiBtn.style.fontSize = "20px";
-      emojiBtn.style.cursor = "pointer";
-      emojiBtn.style.border = "none";
-      emojiBtn.style.background = "transparent";
-      emojiBtn.addEventListener('click', () => {
+      let emojiButton = document.createElement("button");
+      emojiButton.textContent = emoji;
+      emojiButton.style.fontSize = "20px";
+      emojiButton.style.cursor = "pointer";
+      emojiButton.addEventListener('click', () => {
         chatInput.value += emoji;
         emojiPicker.remove(); // Cerrar el picker después de seleccionar el emoji
-        chatInput.focus();
       });
-      emojiPicker.appendChild(emojiBtn);
+      emojiPicker.appendChild(emojiButton);
     });
 
     // Mostrar el selector de emojis cerca del botón de emoji
     document.body.appendChild(emojiPicker);
     let rect = emojiButton.getBoundingClientRect();
-    emojiPicker.style.top = `${rect.bottom + window.scrollY}px`;
-    emojiPicker.style.left = `${rect.left + window.scrollX}px`;
-
-    // Cerrar el emojiPicker al hacer clic fuera
-    document.addEventListener('click', (event) => {
-      if (!emojiPicker.contains(event.target) && event.target !== emojiButton) {
-        emojiPicker.remove();
-      }
-    }, { once: true });
+    emojiPicker.style.top = `${rect.bottom}px`;
+    emojiPicker.style.left = `${rect.left}px`;
   });
 });

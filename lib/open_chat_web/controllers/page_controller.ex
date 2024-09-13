@@ -8,6 +8,6 @@ defmodule OpenChatWeb.PageController do
   end
 
   def terms(conn, _params) do
-    render(conn, :terms)
+    render(conn, :terms, layout: false)
   end
 end
