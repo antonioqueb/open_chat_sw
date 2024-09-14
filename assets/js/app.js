@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function generateRandomColor() {
     let color;
     do {
-      color = Math.floor(Math.random() * 16777215).toString(16); // Generar un color hexadecimal aleatorio
+      color = Math.floor(Math.random()*16777215).toString(16); // Generar un color hexadecimal aleatorio
     } while (parseInt(color, 16) > 0xCCCCCC); // Repetir si es muy claro
     return `#${color}`;
   }
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log('Elementos del DOM:', { joinForm, chatContainer, chatInput, chatForm, messagesContainer, emojiButton });
 
   // --- Código para el dropdown personalizado de estados ---
-
+  
   // Lista de estados de la República Mexicana
   const estados = [
     "Estado de México",
@@ -118,146 +118,123 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- Fin del código para el dropdown personalizado ---
 
-  // Unirse al chat y redirigir a la ruta del estado seleccionado
+  // Unirse al chat y actualizar el nombre de la sala
   joinForm.addEventListener("submit", function (event) {
     event.preventDefault();
-
+    
     // Obtener username y estado
     let username = document.querySelector("#username").value.trim();
-    let state = stateInput.value.trim();
+    // Actualizamos para obtener el valor del input oculto
+    let state = stateInput.value;
     let userColor = generateRandomColor(); // Generar un color aleatorio para el usuario
 
     console.log(`Intentando unirse al chat del estado: ${state} con el usuario: ${username} y color: ${userColor}`);
 
     if (username !== "" && state !== "") {
-      // Redirigir a la página del chat del estado seleccionado
-      window.location.href = `/chat/${state}?username=${encodeURIComponent(username)}&color=${encodeURIComponent(userColor)}`;
+      // Actualizar el título de la sala de chat
+      chatRoomTitle.textContent = `${state} Swinger`;
+
+      // Unirse al canal basado en el estado seleccionado
+      let channel = socket.channel(`room:${state}`, { user: username });
+      
+      channel.join()
+        .receive("ok", resp => {
+          console.log(`Conectado exitosamente al chat del estado: ${state}`);
+
+          // Ocultar la sección de bienvenida
+          welcomeSection.classList.add("hidden");
+
+          // Mostrar la ventana de chat
+          chatContainer.classList.remove("hidden");
+          chatContainer.classList.add("block");
+
+          // Mostrar cuántos usuarios hay activos
+          activeUsersCountElement.textContent = resp.active_users || 1;
+
+          // Notificar al chat que el usuario se ha unido (en gris)
+          let joinMessage = document.createElement("p");
+          joinMessage.classList.add("text-gray-500", "italic");
+          messagesContainer.appendChild(joinMessage);
+
+          // Scroll automático al final
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        })
+        .receive("error", resp => {
+          console.error(`No se pudo conectar al chat del estado: ${state}`, resp);
+        });
+
+      // Manejo del envío de mensajes
+      chatForm.addEventListener("submit", event => {
+        event.preventDefault();
+        let message = chatInput.value.trim();
+        if (message !== "") {
+          console.log('Enviando mensaje:', message);
+          channel.push("new_message", { message: message, color: userColor }); // Pasar el color del usuario al servidor
+          chatInput.value = ""; // Limpiar el campo de entrada
+        }
+      });
+
+      // Manejo de la recepción de mensajes
+      channel.on("new_message", payload => {
+        console.log('Nuevo mensaje recibido:', payload.message);
+
+        // Crear el nuevo elemento del mensaje
+        let messageElement = document.createElement("p");
+
+        // Aplicar el color aleatorio al nombre del usuario y semibold
+        let usernameSpan = document.createElement("span");
+        usernameSpan.textContent = `${payload.user}: `;
+        usernameSpan.style.color = payload.color; // Aplicar el color recibido
+        usernameSpan.style.fontWeight = "600"; // Aplicar semibold
+
+        // Agregar el mensaje del usuario
+        let messageText = document.createTextNode(payload.message);
+
+        // Añadir el nombre de usuario y el mensaje al contenedor
+        messageElement.appendChild(usernameSpan);
+        messageElement.appendChild(messageText);
+        messageElement.classList.add("text-black");
+
+        // Añadir el nuevo mensaje al contenedor de mensajes
+        messagesContainer.appendChild(messageElement);
+
+        // Scroll automático al final
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+
+      // Escuchar los eventos "user_joined"
+      channel.on("user_joined", payload => {
+        console.log('Nuevo usuario se ha unido:', payload);
+        activeUsersCountElement.textContent = payload.active_users;
+
+        // Mostrar el mensaje de que un nuevo usuario se ha unido
+        let newUserMessage = document.createElement("p");
+        newUserMessage.innerHTML = `${payload.user} se ha unido al chat.`;
+        newUserMessage.classList.add("text-gray-500", "italic");
+        messagesContainer.appendChild(newUserMessage);
+
+        // Scroll automático al final
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
+
+      // Actualizar cuando un usuario deja el canal
+      channel.on("user_left", payload => {
+        console.log('Usuario ha salido:', payload);
+        activeUsersCountElement.textContent = payload.active_users;
+
+        // Mostrar el mensaje de que un usuario ha salido
+        let userLeftMessage = document.createElement("p");
+        userLeftMessage.textContent = `${payload.user} ha dejado el chat.`;
+        userLeftMessage.classList.add("text-gray-500", "italic");
+        messagesContainer.appendChild(userLeftMessage);
+
+        // Scroll automático al final
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      });
     } else {
       alert("Por favor, ingresa un nombre de usuario y selecciona un estado.");
     }
   });
-
-  document.addEventListener("DOMContentLoaded", () => {
-    // Conectar al socket y configurar el canal una vez que estamos en la ruta de chat del estado
-    let state = "<%= @state %>";  // Estado extraído del servidor
-    let username = "<%= @username %>";  // Username extraído del servidor
-    let userColor = "<%= @color %>";  // Color extraído del servidor
-
-    let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
-    let socket = new Phoenix.Socket("/socket", { params: { _csrf_token: csrfToken } });
-    socket.connect();
-
-    let welcomeSection = document.querySelector("#welcome-section");
-    let chatContainer = document.querySelector("#chat-container");
-    let chatForm = document.querySelector("#chat-form");
-    let chatInput = document.querySelector("#chat-input");
-    let messagesContainer = document.querySelector("#messages");
-    let activeUsersCountElement = document.getElementById("active-users-count"); // Elemento donde se muestra el número de usuarios activos
-    let chatRoomTitle = document.getElementById("chat-room-title"); // Título de la sala de chat
-
-    console.log(`Conectando al canal del estado: ${state} con el usuario: ${username}`);
-
-    // Unirse al canal basado en el estado seleccionado
-    let channel = socket.channel(`room:${state}`, { user: username });
-
-    channel.join()
-      .receive("ok", resp => {
-        console.log(`Conectado exitosamente al chat del estado: ${state}`);
-
-        // Actualizar el título de la sala de chat
-        chatRoomTitle.textContent = `${state} Swinger`;
-
-        // Ocultar la sección de bienvenida y mostrar el chat
-        welcomeSection.classList.add("hidden");
-        chatContainer.classList.remove("hidden");
-        chatContainer.classList.add("block");
-
-        // Mostrar cuántos usuarios hay activos
-        activeUsersCountElement.textContent = resp.active_users || 1;
-
-        // Notificar al chat que el usuario se ha unido (mensaje en gris)
-        let joinMessage = document.createElement("p");
-        joinMessage.classList.add("text-gray-500", "italic");
-        joinMessage.textContent = `${username} se ha unido al chat.`;
-        messagesContainer.appendChild(joinMessage);
-
-        // Scroll automático al final
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-      })
-      .receive("error", resp => {
-        console.error(`No se pudo conectar al chat del estado: ${state}`, resp);
-      });
-
-    // Manejo del envío de mensajes
-    chatForm.addEventListener("submit", event => {
-      event.preventDefault();
-      let message = chatInput.value.trim();
-      if (message !== "") {
-        console.log('Enviando mensaje:', message);
-        channel.push("new_message", { message: message, color: userColor }); // Pasar el color del usuario al servidor
-        chatInput.value = ""; // Limpiar el campo de entrada
-      }
-    });
-
-    // Manejo de la recepción de mensajes
-    channel.on("new_message", payload => {
-      console.log('Nuevo mensaje recibido:', payload.message);
-
-      // Crear el nuevo elemento del mensaje
-      let messageElement = document.createElement("p");
-
-      // Aplicar el color aleatorio al nombre del usuario y semibold
-      let usernameSpan = document.createElement("span");
-      usernameSpan.textContent = `${payload.user}: `;
-      usernameSpan.style.color = payload.color; // Aplicar el color recibido
-      usernameSpan.style.fontWeight = "600"; // Aplicar semibold
-
-      // Agregar el mensaje del usuario
-      let messageText = document.createTextNode(payload.message);
-
-      // Añadir el nombre de usuario y el mensaje al contenedor
-      messageElement.appendChild(usernameSpan);
-      messageElement.appendChild(messageText);
-      messageElement.classList.add("text-black");
-
-      // Añadir el nuevo mensaje al contenedor de mensajes
-      messagesContainer.appendChild(messageElement);
-
-      // Scroll automático al final
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
-
-    // Escuchar los eventos "user_joined"
-    channel.on("user_joined", payload => {
-      console.log('Nuevo usuario se ha unido:', payload);
-      activeUsersCountElement.textContent = payload.active_users;
-
-      // Mostrar el mensaje de que un nuevo usuario se ha unido
-      let newUserMessage = document.createElement("p");
-      newUserMessage.innerHTML = `${payload.user} se ha unido al chat.`;
-      newUserMessage.classList.add("text-gray-500", "italic");
-      messagesContainer.appendChild(newUserMessage);
-
-      // Scroll automático al final
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
-
-    // Actualizar cuando un usuario deja el canal
-    channel.on("user_left", payload => {
-      console.log('Usuario ha salido:', payload);
-      activeUsersCountElement.textContent = payload.active_users;
-
-      // Mostrar el mensaje de que un usuario ha salido
-      let userLeftMessage = document.createElement("p");
-      userLeftMessage.textContent = `${payload.user} ha dejado el chat.`;
-      userLeftMessage.classList.add("text-gray-500", "italic");
-      messagesContainer.appendChild(userLeftMessage);
-
-      // Scroll automático al final
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    });
-  });
-
 
   // Implementación básica de emojis usando Unicode nativo
   emojiButton.addEventListener('click', () => {
@@ -270,23 +247,4 @@ document.addEventListener("DOMContentLoaded", () => {
     emojiPicker.style.display = "grid";
     emojiPicker.style.gridTemplateColumns = "repeat(4, 1fr)";
     emojiPicker.style.gap = "5px";
-
-    emojis.forEach(emoji => {
-      let emojiButton = document.createElement("button");
-      emojiButton.textContent = emoji;
-      emojiButton.style.fontSize = "20px";
-      emojiButton.style.cursor = "pointer";
-      emojiButton.addEventListener('click', () => {
-        chatInput.value += emoji;
-        emojiPicker.remove(); // Cerrar el picker después de seleccionar el emoji
-      });
-      emojiPicker.appendChild(emojiButton);
-    });
-
-    // Mostrar el selector de emojis cerca del botón de emoji
-    document.body.appendChild(emojiPicker);
-    let rect = emojiButton.getBoundingClientRect();
-    emojiPicker.style.top = `${rect.bottom}px`;
-    emojiPicker.style.left = `${rect.left}px`;
   });
-});
