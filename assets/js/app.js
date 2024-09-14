@@ -247,4 +247,20 @@ document.addEventListener("DOMContentLoaded", () => {
     emojiPicker.style.display = "grid";
     emojiPicker.style.gridTemplateColumns = "repeat(4, 1fr)";
     emojiPicker.style.gap = "5px";
-  });
+    
+    // Agregar los emojis al selector
+    emojis.forEach(emoji => {
+      let emojiItem = document.createElement("span");
+      emojiItem.textContent = emoji;
+      emojiItem.style.cursor = "pointer";
+      emojiItem.addEventListener('click', () => {
+        chatInput.value += emoji; // Agregar emoji al input de chat
+        emojiPicker.remove(); // Cerrar el selector de emojis
+      });
+      emojiPicker.appendChild(emojiItem);
+    });
+
+    // Agregar el emojiPicker al DOM
+    document.body.appendChild(emojiPicker);
+    });
+    });
