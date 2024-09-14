@@ -1,0 +1,48 @@
+# lib/open_chat_web/controllers/page_html/chat_room.html.heex
+<div class="chat-room">
+  <h1>Bienvenido al chat de <%= @page_title %></h1>
+  
+  <div
+    id="chat-container"
+    class="chat-container bg-gradient-to-b from-purple-700 to-black h-screen"
+  >
+    <div class="relative z-10 px-2 py-4 sm:px-4 sm:py-6 lg:px-8 flex justify-center items-center h-full">
+      <div class="chat-box w-full max-w-3xl bg-white p-4 sm:p-6 rounded-lg shadow-xl h-full">
+        <div class="chat-header mb-4 text-center">
+          <h1 id="chat-room-title" class="text-2xl sm:text-3xl font-bold text-purple-700">
+            Chat en <%= @state %>
+          </h1>
+          
+          <div class="bg-purple-100 text-purple-700 rounded-full px-3 py-1 inline-block text-base sm:text-lg font-semibold">
+            Usuarios en línea: <span id="active-users-count">0</span>
+          </div>
+        </div>
+        
+        <div
+          id="messages"
+          class="chat-messages min-h-[200px] sm:min-h-[400px] max-h-[60vh] overflow-y-auto border rounded-lg p-2 bg-gray-50 shadow-inner"
+        >
+          <!-- Aquí se insertarán los mensajes -->
+        </div>
+        
+        <div class="chat-input mt-4 sm:mt-6">
+          <form id="chat-form" class="flex items-center space-x-2 sm:space-x-4">
+            <input
+              type="text"
+              id="chat-input"
+              class="flex-grow border border-gray-300 rounded-lg px-2 sm:px-4 py-2"
+              placeholder="Comparte tus pensamientos..."
+            />
+            <button
+              type="submit"
+              class="px-4 sm:px-6 py-2 sm:py-3 bg-purple-700 text-white font-semibold rounded-lg shadow-lg"
+            >
+              Enviar
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Aquí va tu código de chat -->
+</div>
