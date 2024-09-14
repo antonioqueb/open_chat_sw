@@ -7,17 +7,17 @@ RUN apk add --no-cache bash openssl git build-base npm
 # Configura el entorno de trabajo
 WORKDIR /app
 
-# Instala las dependencias de Elixir y Phoenix
+# Instala las herramientas necesarias de Elixir
 RUN mix local.hex --force && \
     mix local.rebar --force
 
-# Copia el archivo mix.exs para instalar las dependencias
+# Copia el archivo mix.exs para instalar las dependencias (mix.lock se generará)
 COPY mix.exs ./
 
 # Instala las dependencias de Elixir (esto generará el mix.lock automáticamente)
 RUN mix deps.get
 
-# Cambia a la carpeta de assets y copia los archivos de configuración de NPM
+# Cambia al directorio de assets y copia los archivos de configuración de NPM
 WORKDIR /app/assets
 COPY assets/package.json assets/package-lock.json ./
 
